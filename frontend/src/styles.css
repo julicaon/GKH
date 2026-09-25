@@ -1,0 +1,74 @@
+:root {
+  --page-pad: 16px;
+  --urgency-high: #c62828;
+  --devshell-bg: #1a237e;
+  --devshell-fg: #e8eaf6;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.page {
+  padding: var(--page-pad);
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.page-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.muted {
+  opacity: 0.7;
+}
+
+.center {
+  display: flex;
+  justify-content: center;
+  padding: 24px;
+}
+
+.urgency-high {
+  color: var(--urgency-high);
+  font-weight: 600;
+}
+
+.devshell-banner {
+  background: var(--devshell-bg);
+  color: var(--devshell-fg);
+  padding: 8px 12px;
+  font-size: 13px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: center;
+}
+
+.devshell-banner a {
+  color: #bbdefb;
+}
+
+.photo-preview {
+  max-width: 100%;
+  max-height: 240px;
+  object-fit: contain;
+}

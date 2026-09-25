@@ -1,0 +1,1425 @@
+openapi: 3.1.0
+info:
+  title: Smart City MVP Ticket System
+  version: 1.0.0
+paths:
+  /api/auth/login:
+    post:
+      tags:
+      - auth
+      summary: Login
+      operationId: login_api_auth_login_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/buildings:
+    get:
+      tags:
+      - buildings
+      summary: List Buildings
+      operationId: list_buildings_api_buildings_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/BuildingOut'
+                type: array
+                title: Response List Buildings Api Buildings Get
+  /api/buildings/{building_id}/categories:
+    get:
+      tags:
+      - buildings
+      summary: Building Categories
+      operationId: building_categories_api_buildings__building_id__categories_get
+      parameters:
+      - name: building_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Building Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BuildingCategoriesOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/parent-categories:
+    get:
+      tags:
+      - triage
+      summary: List Parents
+      operationId: list_parents_api_parent_categories_get
+      parameters:
+      - name: active_only
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+          title: Active Only
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ParentCategoryOut'
+                title: Response List Parents Api Parent Categories Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      tags:
+      - triage
+      summary: Create Parent
+      operationId: create_parent_api_parent_categories_post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ParentCategoryIn'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParentCategoryOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/categories:
+    get:
+      tags:
+      - triage
+      summary: List Categories
+      operationId: list_categories_api_categories_get
+      parameters:
+      - name: parentId
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Parentid
+      - name: active_only
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+          title: Active Only
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CategoryOut'
+                title: Response List Categories Api Categories Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      tags:
+      - triage
+      summary: Create Category
+      operationId: create_category_api_categories_post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryIn'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/categories/{category_id}:
+    patch:
+      tags:
+      - triage
+      summary: Update Category
+      operationId: update_category_api_categories__category_id__patch
+      parameters:
+      - name: category_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Category Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryUpdateIn'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/questions:
+    post:
+      tags:
+      - triage
+      summary: Add Question
+      operationId: add_question_api_questions_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuestionIn'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestionOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/questions/{question_id}/options:
+    post:
+      tags:
+      - triage
+      summary: Add Option
+      operationId: add_option_api_questions__question_id__options_post
+      parameters:
+      - name: question_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Question Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OptionIn'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestionOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/rules:
+    post:
+      tags:
+      - triage
+      summary: Upsert Rule
+      operationId: upsert_rule_api_rules_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleIn'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuleOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/categories/{category_id}/questionnaire:
+    get:
+      tags:
+      - triage
+      summary: Questionnaire
+      operationId: questionnaire_api_categories__category_id__questionnaire_get
+      parameters:
+      - name: category_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Category Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestionnaireOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/tickets:
+    post:
+      tags:
+      - tickets
+      summary: Submit Ticket
+      operationId: submit_ticket_api_tickets_post
+      parameters:
+      - name: X-Max-User-Id
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Max-User-Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitTicketIn'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    get:
+      tags:
+      - tickets
+      summary: List Tickets
+      operationId: list_tickets_api_tickets_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: role
+        in: query
+        required: true
+        schema:
+          type: string
+          description: org|resident
+          title: Role
+        description: org|resident
+      - name: X-Max-User-Id
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Max-User-Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TicketOut'
+                title: Response List Tickets Api Tickets Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/tickets/{ticket_id}:
+    get:
+      tags:
+      - tickets
+      summary: Get Ticket
+      operationId: get_ticket_api_tickets__ticket_id__get
+      parameters:
+      - name: ticket_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Ticket Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/tickets/{ticket_id}/accept:
+    post:
+      tags:
+      - tickets
+      summary: Accept Ticket
+      operationId: accept_ticket_api_tickets__ticket_id__accept_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: ticket_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Ticket Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/tickets/{ticket_id}/assign:
+    post:
+      tags:
+      - tickets
+      summary: Assign Ticket
+      operationId: assign_ticket_api_tickets__ticket_id__assign_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: ticket_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Ticket Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignIn'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/tickets/{ticket_id}/complete:
+    post:
+      tags:
+      - tickets
+      summary: Complete Ticket
+      operationId: complete_ticket_api_tickets__ticket_id__complete_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: ticket_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Ticket Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/tickets/{ticket_id}/cancel:
+    post:
+      tags:
+      - tickets
+      summary: Cancel Ticket
+      operationId: cancel_ticket_api_tickets__ticket_id__cancel_post
+      parameters:
+      - name: ticket_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Ticket Id
+      - name: X-Max-User-Id
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Max-User-Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/specialists:
+    get:
+      tags:
+      - specialists
+      summary: List Specialists
+      operationId: list_specialists_api_specialists_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: organizationId
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Organizationid
+      - name: active_only
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+          title: Active Only
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SpecialistOut'
+                title: Response List Specialists Api Specialists Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      tags:
+      - specialists
+      summary: Create Specialist
+      operationId: create_specialist_api_specialists_post
+      security:
+      - HTTPBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpecialistIn'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpecialistOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/specialists/{specialist_id}:
+    patch:
+      tags:
+      - specialists
+      summary: Update Specialist
+      operationId: update_specialist_api_specialists__specialist_id__patch
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: specialist_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Specialist Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpecialistUpdateIn'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpecialistOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/bot/webhook:
+    post:
+      tags:
+      - bot
+      summary: Bot Webhook
+      operationId: bot_webhook_api_bot_webhook_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                type: object
+                title: Response Bot Webhook Api Bot Webhook Post
+  /health:
+    get:
+      summary: Health
+      operationId: health_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+components:
+  schemas:
+    AnswerSnapshotOut:
+      properties:
+        questionId:
+          type: string
+          title: Questionid
+        questionLabel:
+          type: string
+          title: Questionlabel
+        optionId:
+          type: string
+          title: Optionid
+        optionLabel:
+          type: string
+          title: Optionlabel
+        optionCode:
+          type: string
+          title: Optioncode
+      type: object
+      required:
+      - questionId
+      - questionLabel
+      - optionId
+      - optionLabel
+      - optionCode
+      title: AnswerSnapshotOut
+    AssignIn:
+      properties:
+        specialistId:
+          type: string
+          title: Specialistid
+      type: object
+      required:
+      - specialistId
+      title: AssignIn
+    BuildingCategoriesOut:
+      properties:
+        building:
+          $ref: '#/components/schemas/BuildingOut'
+        tree:
+          items:
+            $ref: '#/components/schemas/CategoryTreeNode'
+          type: array
+          title: Tree
+      type: object
+      required:
+      - building
+      - tree
+      title: BuildingCategoriesOut
+    BuildingOut:
+      properties:
+        id:
+          type: string
+          title: Id
+        addressLabel:
+          type: string
+          title: Addresslabel
+        organizationId:
+          type: string
+          title: Organizationid
+        availableParentCategoryIds:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Availableparentcategoryids
+        availableCategoryIds:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Availablecategoryids
+      type: object
+      required:
+      - id
+      - addressLabel
+      - organizationId
+      title: BuildingOut
+    CategoryIn:
+      properties:
+        parentCategoryId:
+          type: string
+          title: Parentcategoryid
+        name:
+          type: string
+          title: Name
+        order:
+          type: integer
+          title: Order
+          default: 0
+        active:
+          type: boolean
+          title: Active
+          default: true
+        defaultRecommendationText:
+          type: string
+          title: Defaultrecommendationtext
+          default: ''
+        defaultUrgency:
+          $ref: '#/components/schemas/UrgencyLevel'
+          default: MEDIUM
+        organizationIds:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Organizationids
+        id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Id
+      type: object
+      required:
+      - parentCategoryId
+      - name
+      title: CategoryIn
+    CategoryOut:
+      properties:
+        id:
+          type: string
+          title: Id
+        parentCategoryId:
+          type: string
+          title: Parentcategoryid
+        name:
+          type: string
+          title: Name
+        active:
+          type: boolean
+          title: Active
+        order:
+          type: integer
+          title: Order
+        defaultRecommendationText:
+          type: string
+          title: Defaultrecommendationtext
+        defaultUrgency:
+          $ref: '#/components/schemas/UrgencyLevel'
+        organizationIds:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Organizationids
+      type: object
+      required:
+      - id
+      - parentCategoryId
+      - name
+      - active
+      - order
+      - defaultRecommendationText
+      - defaultUrgency
+      title: CategoryOut
+    CategoryTreeNode:
+      properties:
+        parent:
+          $ref: '#/components/schemas/ParentCategoryOut'
+        categories:
+          items:
+            $ref: '#/components/schemas/CategoryOut'
+          type: array
+          title: Categories
+      type: object
+      required:
+      - parent
+      - categories
+      title: CategoryTreeNode
+    CategoryUpdateIn:
+      properties:
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Name
+        active:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Active
+        order:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Order
+        defaultRecommendationText:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Defaultrecommendationtext
+        defaultUrgency:
+          anyOf:
+          - $ref: '#/components/schemas/UrgencyLevel'
+          - type: 'null'
+        organizationIds:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Organizationids
+      type: object
+      title: CategoryUpdateIn
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    LoginRequest:
+      properties:
+        username:
+          type: string
+          title: Username
+        password:
+          type: string
+          title: Password
+      type: object
+      required:
+      - username
+      - password
+      title: LoginRequest
+    LoginResponse:
+      properties:
+        access_token:
+          type: string
+          title: Access Token
+        token_type:
+          type: string
+          title: Token Type
+          default: bearer
+        dispatcher_id:
+          type: string
+          title: Dispatcher Id
+        organization_id:
+          type: string
+          title: Organization Id
+        username:
+          type: string
+          title: Username
+        full_name:
+          type: string
+          title: Full Name
+          default: ''
+      type: object
+      required:
+      - access_token
+      - dispatcher_id
+      - organization_id
+      - username
+      title: LoginResponse
+    OptionIn:
+      properties:
+        label:
+          type: string
+          title: Label
+        code:
+          type: string
+          title: Code
+        id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Id
+      type: object
+      required:
+      - label
+      - code
+      title: OptionIn
+    OptionOut:
+      properties:
+        id:
+          type: string
+          title: Id
+        label:
+          type: string
+          title: Label
+        code:
+          type: string
+          title: Code
+      type: object
+      required:
+      - id
+      - label
+      - code
+      title: OptionOut
+    ParentCategoryIn:
+      properties:
+        name:
+          type: string
+          title: Name
+        order:
+          type: integer
+          title: Order
+          default: 0
+        active:
+          type: boolean
+          title: Active
+          default: true
+        defaultUrgencyHint:
+          $ref: '#/components/schemas/UrgencyLevel'
+          default: MEDIUM
+        id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Id
+      type: object
+      required:
+      - name
+      title: ParentCategoryIn
+    ParentCategoryOut:
+      properties:
+        id:
+          type: string
+          title: Id
+        name:
+          type: string
+          title: Name
+        order:
+          type: integer
+          title: Order
+        active:
+          type: boolean
+          title: Active
+        defaultUrgencyHint:
+          $ref: '#/components/schemas/UrgencyLevel'
+      type: object
+      required:
+      - id
+      - name
+      - order
+      - active
+      - defaultUrgencyHint
+      title: ParentCategoryOut
+    QuestionIn:
+      properties:
+        categoryId:
+          type: string
+          title: Categoryid
+        text:
+          type: string
+          title: Text
+        order:
+          type: integer
+          title: Order
+          default: 0
+        active:
+          type: boolean
+          title: Active
+          default: true
+        options:
+          items:
+            $ref: '#/components/schemas/OptionIn'
+          type: array
+          title: Options
+        id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Id
+      type: object
+      required:
+      - categoryId
+      - text
+      title: QuestionIn
+    QuestionOut:
+      properties:
+        id:
+          type: string
+          title: Id
+        categoryId:
+          type: string
+          title: Categoryid
+        text:
+          type: string
+          title: Text
+        order:
+          type: integer
+          title: Order
+        active:
+          type: boolean
+          title: Active
+        options:
+          items:
+            $ref: '#/components/schemas/OptionOut'
+          type: array
+          title: Options
+      type: object
+      required:
+      - id
+      - categoryId
+      - text
+      - order
+      - active
+      - options
+      title: QuestionOut
+    QuestionnaireOut:
+      properties:
+        category:
+          $ref: '#/components/schemas/CategoryOut'
+        parent:
+          anyOf:
+          - $ref: '#/components/schemas/ParentCategoryOut'
+          - type: 'null'
+        questions:
+          items:
+            $ref: '#/components/schemas/QuestionOut'
+          type: array
+          title: Questions
+        rules:
+          items:
+            $ref: '#/components/schemas/RuleOut'
+          type: array
+          title: Rules
+      type: object
+      required:
+      - category
+      - questions
+      - rules
+      title: QuestionnaireOut
+    RuleIn:
+      properties:
+        categoryId:
+          type: string
+          title: Categoryid
+        match:
+          additionalProperties:
+            type: string
+          type: object
+          title: Match
+        recommendationText:
+          type: string
+          title: Recommendationtext
+        priority:
+          type: integer
+          title: Priority
+        active:
+          type: boolean
+          title: Active
+          default: true
+        setsUrgency:
+          anyOf:
+          - $ref: '#/components/schemas/UrgencyLevel'
+          - type: 'null'
+        id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Id
+      type: object
+      required:
+      - categoryId
+      - match
+      - recommendationText
+      - priority
+      title: RuleIn
+    RuleOut:
+      properties:
+        id:
+          type: string
+          title: Id
+        categoryId:
+          type: string
+          title: Categoryid
+        match:
+          additionalProperties:
+            type: string
+          type: object
+          title: Match
+        recommendationText:
+          type: string
+          title: Recommendationtext
+        priority:
+          type: integer
+          title: Priority
+        active:
+          type: boolean
+          title: Active
+        setsUrgency:
+          anyOf:
+          - $ref: '#/components/schemas/UrgencyLevel'
+          - type: 'null'
+      type: object
+      required:
+      - id
+      - categoryId
+      - match
+      - recommendationText
+      - priority
+      - active
+      title: RuleOut
+    SpecialistIn:
+      properties:
+        organizationId:
+          type: string
+          title: Organizationid
+        fullName:
+          type: string
+          title: Fullname
+        skillTags:
+          items:
+            type: string
+          type: array
+          title: Skilltags
+        active:
+          type: boolean
+          title: Active
+          default: true
+        id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Id
+      type: object
+      required:
+      - organizationId
+      - fullName
+      title: SpecialistIn
+    SpecialistOut:
+      properties:
+        id:
+          type: string
+          title: Id
+        organizationId:
+          type: string
+          title: Organizationid
+        fullName:
+          type: string
+          title: Fullname
+        skillTags:
+          items:
+            type: string
+          type: array
+          title: Skilltags
+        active:
+          type: boolean
+          title: Active
+      type: object
+      required:
+      - id
+      - organizationId
+      - fullName
+      - skillTags
+      - active
+      title: SpecialistOut
+    SpecialistUpdateIn:
+      properties:
+        fullName:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Fullname
+        skillTags:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Skilltags
+        active:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Active
+      type: object
+      title: SpecialistUpdateIn
+    StatusHistoryOut:
+      properties:
+        status:
+          $ref: '#/components/schemas/TicketStatus'
+        at:
+          type: string
+          format: date-time
+          title: At
+        note:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Note
+      type: object
+      required:
+      - status
+      - at
+      title: StatusHistoryOut
+    SubmitTicketIn:
+      properties:
+        buildingId:
+          type: string
+          title: Buildingid
+        categoryId:
+          type: string
+          title: Categoryid
+        answers:
+          additionalProperties:
+            type: string
+          type: object
+          title: Answers
+        photoUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Photourl
+      type: object
+      required:
+      - buildingId
+      - categoryId
+      - answers
+      title: SubmitTicketIn
+    TicketOut:
+      properties:
+        id:
+          type: string
+          title: Id
+        residentRef:
+          type: string
+          title: Residentref
+        buildingId:
+          type: string
+          title: Buildingid
+        addressSnapshot:
+          type: string
+          title: Addresssnapshot
+        organizationId:
+          type: string
+          title: Organizationid
+        parentCategoryId:
+          type: string
+          title: Parentcategoryid
+        categoryId:
+          type: string
+          title: Categoryid
+        answersSnapshot:
+          items:
+            $ref: '#/components/schemas/AnswerSnapshotOut'
+          type: array
+          title: Answerssnapshot
+        recommendationTextSnapshot:
+          type: string
+          title: Recommendationtextsnapshot
+        urgencyLevel:
+          $ref: '#/components/schemas/UrgencyLevel'
+        summaryText:
+          type: string
+          title: Summarytext
+        status:
+          $ref: '#/components/schemas/TicketStatus'
+        photoUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Photourl
+        assigneeSpecialistId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Assigneespecialistid
+        takenByDispatcherId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Takenbydispatcherid
+        createdAt:
+          type: string
+          format: date-time
+          title: Createdat
+        updatedAt:
+          type: string
+          format: date-time
+          title: Updatedat
+        statusHistory:
+          items:
+            $ref: '#/components/schemas/StatusHistoryOut'
+          type: array
+          title: Statushistory
+      type: object
+      required:
+      - id
+      - residentRef
+      - buildingId
+      - addressSnapshot
+      - organizationId
+      - parentCategoryId
+      - categoryId
+      - answersSnapshot
+      - recommendationTextSnapshot
+      - urgencyLevel
+      - summaryText
+      - status
+      - createdAt
+      - updatedAt
+      - statusHistory
+      title: TicketOut
+    TicketStatus:
+      type: string
+      enum:
+      - NEW
+      - ACCEPTED
+      - IN_PROGRESS
+      - DONE
+      - CANCELLED_BY_RESIDENT
+      title: TicketStatus
+    UrgencyLevel:
+      type: string
+      enum:
+      - LOW
+      - MEDIUM
+      - HIGH
+      title: UrgencyLevel
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+  securitySchemes:
+    HTTPBearer:
+      type: http
+      scheme: bearer
