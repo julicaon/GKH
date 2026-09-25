@@ -104,7 +104,9 @@ export interface Ticket {
   summaryText: string;
   status: TicketStatus;
   photoUrl?: string | null;
+  cancelReason?: string | null;
   assigneeSpecialistId?: string | null;
+  assigneeSpecialistName?: string | null;
   takenByDispatcherId?: string | null;
   createdAt: string;
   updatedAt: string;

@@ -44,6 +44,31 @@ paths:
                   $ref: '#/components/schemas/BuildingOut'
                 type: array
                 title: Response List Buildings Api Buildings Get
+  /api/buildings/resolve:
+    post:
+      tags:
+      - buildings
+      summary: Resolve Building
+      operationId: resolve_building_api_buildings_resolve_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResolveBuildingIn'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BuildingOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /api/buildings/{building_id}/categories:
     get:
       tags:
@@ -1105,6 +1130,21 @@ components:
       - questions
       - rules
       title: QuestionnaireOut
+    ResolveBuildingIn:
+      properties:
+        buildingId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Buildingid
+        addressQuery:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Addressquery
+          description: Свободный ввод адреса для маппинга на seed Building
+      type: object
+      title: ResolveBuildingIn
     RuleIn:
       properties:
         categoryId:
@@ -1341,6 +1381,11 @@ components:
           - type: string
           - type: 'null'
           title: Assigneespecialistid
+        assigneeSpecialistName:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Assigneespecialistname
         takenByDispatcherId:
           anyOf:
           - type: string

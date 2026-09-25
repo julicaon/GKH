@@ -1,11 +1,20 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Button, CellList, CellSimple, Spinner, Typography } from '@maxhub/max-ui';
+import {
+  Button,
+  CellList,
+  CellSimple,
+  Spinner,
+  Textarea,
+  Typography,
+} from '@maxhub/max-ui';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { cancelTicket, getTicket, listTickets } from '../../shared/api/tickets';
 import type { Ticket } from '../../shared/api/types';
 import { useDevShellOverrides } from '../../dev/DevShell';
+import { StatusBadge, UrgencyBadge } from '../../shared/StatusBadge';
+import { statusLabel } from '../../shared/labels';
 
-const canCancel = (status: Ticket['status']) => status === 'NEW' || status === 'ACCEPTED';
+const canCancel = (status: Ticket['status']) => status !== 'CANCELLED_BY_RESIDENT';
 
 export function MyTickets() {
   const { id } = useParams();
@@ -16,6 +25,8 @@ export function MyTickets() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [cancelForId, setCancelForId] = useState<string | null>(null);
+  const [cancelReason, setCancelReason] = useState('');
 
   const reload = useCallback(async () => {
     setLoading(true);
@@ -38,10 +49,24 @@ export function MyTickets() {
     void reload();
   }, [reload]);
 
-  const onCancel = async (ticketId: string) => {
-    setBusyId(ticketId);
+  const startCancel = (ticketId: string) => {
+    setCancelForId(ticketId);
+    setCancelReason('');
+    setError(null);
+  };
+
+  const confirmCancel = async () => {
+    if (!cancelForId) return;
+    const reason = cancelReason.trim();
+    if (!reason) {
+      setError('Укажите причину отмены');
+      return;
+    }
+    setBusyId(cancelForId);
     try {
-      await cancelTicket(ticketId, userId);
+      await cancelTicket(cancelForId, userId, reason);
+      setCancelForId(null);
+      setCancelReason('');
       await reload();
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Не удалось отменить');
@@ -49,6 +74,37 @@ export function MyTickets() {
       setBusyId(null);
     }
   };
+
+  const cancelForm = cancelForId ? (
+    <div className="page-stack cancel-panel">
+      <Typography.Title>Почему отменяете?</Typography.Title>
+      <Textarea
+        rows={3}
+        placeholder="Например: проблема решилась сама / ошибка в заявке"
+        value={cancelReason}
+        onChange={(e) => setCancelReason(e.target.value)}
+      />
+      <div className="row">
+        <Button
+          variant="secondary"
+          onClick={() => {
+            setCancelForId(null);
+            setCancelReason('');
+          }}
+        >
+          Назад
+        </Button>
+        <Button
+          variant="destructive"
+          loading={busyId === cancelForId}
+          disabled={!cancelReason.trim()}
+          onClick={() => void confirmCancel()}
+        >
+          Подтвердить отмену
+        </Button>
+      </div>
+    </div>
+  ) : null;
 
   if (loading) {
     return (
@@ -66,20 +122,26 @@ export function MyTickets() {
         </Button>
         {error && <Typography.Body>{error}</Typography.Body>}
         <Typography.Headline>Заявка</Typography.Headline>
+        <div className="status-row">
+          <StatusBadge status={detail.status} />
+          <UrgencyBadge level={detail.urgencyLevel} />
+        </div>
         <CellList mode="island">
           <CellSimple title="Адрес" subtitle={detail.addressSnapshot} />
           <CellSimple title="Суть" subtitle={detail.summaryText} />
-          <CellSimple title="Статус" subtitle={detail.status} />
           <CellSimple
-            title="Приоритет"
-            subtitle={detail.urgencyLevel}
-            after={
-              detail.urgencyLevel === 'HIGH' ? (
-                <span className="urgency-high">HIGH</span>
-              ) : undefined
-            }
+            title="Статус"
+            subtitle={statusLabel(detail.status)}
+            after={<StatusBadge status={detail.status} />}
           />
+          <CellSimple title="Приоритет" after={<UrgencyBadge level={detail.urgencyLevel} />} />
           <CellSimple title="Рекомендация" subtitle={detail.recommendationTextSnapshot} />
+          {detail.assigneeSpecialistName && (
+            <CellSimple title="Мастер" subtitle={detail.assigneeSpecialistName} />
+          )}
+          {detail.cancelReason && (
+            <CellSimple title="Причина отмены" subtitle={detail.cancelReason} />
+          )}
         </CellList>
         {detail.answersSnapshot.map((a) => (
           <CellSimple
@@ -91,12 +153,12 @@ export function MyTickets() {
         {detail.photoUrl && (
           <img className="photo-preview" src={detail.photoUrl} alt="Фото заявки" />
         )}
-        {canCancel(detail.status) && (
+        {cancelForm}
+        {!cancelForId && canCancel(detail.status) && (
           <Button
             variant="destructive"
             stretched
-            loading={busyId === detail.id}
-            onClick={() => void onCancel(detail.id)}
+            onClick={() => startCancel(detail.id)}
           >
             Отменить заявку
           </Button>
@@ -120,28 +182,33 @@ export function MyTickets() {
           <CellSimple
             key={t.id}
             title={t.summaryText}
-            subtitle={`${t.status} · ${t.addressSnapshot}`}
+            subtitle={`${statusLabel(t.status)} · ${t.addressSnapshot}${
+              t.assigneeSpecialistName ? ` · ${t.assigneeSpecialistName}` : ''
+            }`}
             showChevron
             onClick={() => navigate(`/resident/tickets/${t.id}`)}
             after={
-              t.urgencyLevel === 'HIGH' ? <span className="urgency-high">HIGH</span> : undefined
+              <span className="status-row">
+                {t.urgencyLevel === 'HIGH' && <UrgencyBadge level={t.urgencyLevel} />}
+                <StatusBadge status={t.status} />
+              </span>
             }
           />
         ))}
       </CellList>
-      {tickets.map(
-        (t) =>
-          canCancel(t.status) && (
+      {cancelForm}
+      {!cancelForId &&
+        tickets
+          .filter((t) => canCancel(t.status))
+          .map((t) => (
             <Button
               key={`cancel-${t.id}`}
               variant="destructive"
-              loading={busyId === t.id}
-              onClick={() => void onCancel(t.id)}
+              onClick={() => startCancel(t.id)}
             >
               Отменить: {t.summaryText.slice(0, 40)}
             </Button>
-          ),
-      )}
+          ))}
     </div>
   );
 }

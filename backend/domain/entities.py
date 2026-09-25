@@ -6,7 +6,11 @@ from typing import Any, Optional
 from uuid import uuid4
 
 from domain.enums import TicketStatus, UrgencyLevel
-from domain.exceptions import InvalidTicketTransitionError, OrganizationMismatchError
+from domain.exceptions import (
+    InvalidTicketTransitionError,
+    OrganizationMismatchError,
+    ValidationError,
+)
 
 
 def _utcnow() -> datetime:
@@ -123,6 +127,7 @@ class Ticket:
     photo_url: Optional[str] = None
     assignee_specialist_id: Optional[str] = None
     taken_by_dispatcher_id: Optional[str] = None
+    cancel_reason: Optional[str] = None
     created_at: datetime = field(default_factory=_utcnow)
     updated_at: datetime = field(default_factory=_utcnow)
     status_history: list[StatusHistoryEntry] = field(default_factory=list)
@@ -182,12 +187,17 @@ class Ticket:
             )
         self._transition(TicketStatus.DONE, note="Выполнена")
 
-    def cancel_by_resident(self) -> None:
-        if self.status not in (TicketStatus.NEW, TicketStatus.ACCEPTED):
-            raise InvalidTicketTransitionError(
-                "Отменить можно только новую или принятую заявку"
-            )
-        self._transition(TicketStatus.CANCELLED_BY_RESIDENT, note="Отменена жителем")
+    def cancel_by_resident(self, reason: str) -> None:
+        text = (reason or "").strip()
+        if not text:
+            raise ValidationError("Укажите причину отмены")
+        if self.status == TicketStatus.CANCELLED_BY_RESIDENT:
+            raise InvalidTicketTransitionError("Заявка уже отменена")
+        self.cancel_reason = text
+        self._transition(
+            TicketStatus.CANCELLED_BY_RESIDENT,
+            note=f"Отменена жителем: {text}",
+        )
 
 
 @dataclass

@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from infrastructure.persistence.models import Base
+from infrastructure.persistence.schema_patches import ensure_schema_patches
 from infrastructure.seed import seed_database
 from interfaces.routers import auth, bot, buildings, specialists, tickets, triage
 
@@ -13,6 +14,7 @@ async def lifespan(app: FastAPI):
     import interfaces.deps as deps
 
     Base.metadata.create_all(bind=deps._engine)
+    ensure_schema_patches(deps._engine)
     session = deps.SessionLocal()
     try:
         seed_database(session)

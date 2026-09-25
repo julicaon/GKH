@@ -131,6 +131,7 @@ class TicketModel(Base):
     summary_text: Mapped[str] = mapped_column(Text, default="")
     status: Mapped[str] = mapped_column(String(40), nullable=False, default="NEW")
     photo_url: Mapped[Optional[str]] = mapped_column(String(1024), nullable=True)
+    cancel_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     assignee_specialist_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
     taken_by_dispatcher_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)

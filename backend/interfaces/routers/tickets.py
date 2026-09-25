@@ -30,7 +30,7 @@ from interfaces.deps import (
     optional_dispatcher,
     repos,
 )
-from interfaces.schemas import AssignIn, SubmitTicketIn, TicketOut, ticket_out
+from interfaces.schemas import AssignIn, CancelTicketIn, SubmitTicketIn, TicketOut, ticket_out
 
 router = APIRouter(prefix="/api/tickets", tags=["tickets"])
 
@@ -42,6 +42,14 @@ def _map_error(e: Exception) -> HTTPException:
         return HTTPException(status_code=400, detail=str(e))
     return HTTPException(status_code=500, detail="Внутренняя ошибка")
 
+
+def _ticket_out(r, ticket) -> TicketOut:
+    name = None
+    if ticket.assignee_specialist_id:
+        spec = r["specialists"].get_by_id(ticket.assignee_specialist_id)
+        if spec:
+            name = spec.full_name
+    return ticket_out(ticket, assignee_name=name)
 
 @router.post("", response_model=TicketOut)
 def submit_ticket(
@@ -68,7 +76,7 @@ def submit_ticket(
         )
     except Exception as e:
         raise _map_error(e)
-    return ticket_out(ticket)
+    return _ticket_out(r, ticket)
 
 
 @router.get("", response_model=list[TicketOut])
@@ -89,7 +97,7 @@ def list_tickets(
         items = ListTicketsForResident(tickets=r["tickets"]).execute(x_max_user_id)
     else:
         raise HTTPException(status_code=400, detail="role должен быть org или resident")
-    return [ticket_out(t) for t in items]
+    return [_ticket_out(r, t) for t in items]
 
 
 @router.get("/{ticket_id}", response_model=TicketOut)
@@ -99,7 +107,7 @@ def get_ticket(ticket_id: str, db: Session = Depends(get_db)):
         ticket = GetTicket(tickets=r["tickets"]).execute(ticket_id)
     except TicketNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
-    return ticket_out(ticket)
+    return _ticket_out(r, ticket)
 
 
 @router.post("/{ticket_id}/accept", response_model=TicketOut)
@@ -111,11 +119,13 @@ def accept_ticket(
     r = repos(db)
     try:
         ticket = AcceptTicket(tickets=r["tickets"]).execute(
-            ticket_id, dispatcher.dispatcher_id
+            ticket_id,
+            dispatcher.dispatcher_id,
+            organization_id=dispatcher.organization_id,
         )
     except Exception as e:
         raise _map_error(e)
-    return ticket_out(ticket)
+    return _ticket_out(r, ticket)
 
 
 @router.post("/{ticket_id}/assign", response_model=TicketOut)
@@ -129,10 +139,14 @@ def assign_ticket(
     try:
         ticket = AssignSpecialist(
             tickets=r["tickets"], specialists=r["specialists"]
-        ).execute(ticket_id, body.specialistId)
+        ).execute(
+            ticket_id,
+            body.specialistId,
+            organization_id=dispatcher.organization_id,
+        )
     except Exception as e:
         raise _map_error(e)
-    return ticket_out(ticket)
+    return _ticket_out(r, ticket)
 
 
 @router.post("/{ticket_id}/complete", response_model=TicketOut)
@@ -143,23 +157,29 @@ def complete_ticket(
 ):
     r = repos(db)
     try:
-        ticket = CompleteTicket(tickets=r["tickets"]).execute(ticket_id)
+        ticket = CompleteTicket(tickets=r["tickets"]).execute(
+            ticket_id,
+            organization_id=dispatcher.organization_id,
+        )
     except Exception as e:
         raise _map_error(e)
-    return ticket_out(ticket)
+    return _ticket_out(r, ticket)
 
 
 @router.post("/{ticket_id}/cancel", response_model=TicketOut)
 def cancel_ticket(
     ticket_id: str,
+    body: CancelTicketIn,
     db: Session = Depends(get_db),
     x_max_user_id: Annotated[Optional[str], Header(alias="X-Max-User-Id")] = None,
 ):
     r = repos(db)
     try:
         ticket = CancelTicketByResident(tickets=r["tickets"]).execute(
-            ticket_id, resident_ref=x_max_user_id
+            ticket_id,
+            reason=body.reason,
+            resident_ref=x_max_user_id,
         )
     except Exception as e:
         raise _map_error(e)
-    return ticket_out(ticket)
+    return _ticket_out(r, ticket)

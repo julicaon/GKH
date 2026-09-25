@@ -147,10 +147,17 @@ class ListTicketsForResident:
 class AcceptTicket:
     tickets: TicketRepository
 
-    def execute(self, ticket_id: str, dispatcher_id: str) -> Ticket:
+    def execute(
+        self,
+        ticket_id: str,
+        dispatcher_id: str,
+        organization_id: Optional[str] = None,
+    ) -> Ticket:
         ticket = self.tickets.get_by_id(ticket_id)
         if not ticket:
             raise TicketNotFoundError(f"Заявка {ticket_id} не найдена")
+        if organization_id and ticket.organization_id != organization_id:
+            raise ValidationError("Заявка принадлежит другой УК")
         ticket.accept(dispatcher_id)
         return self.tickets.update(ticket)
 
@@ -160,10 +167,17 @@ class AssignSpecialist:
     tickets: TicketRepository
     specialists: SpecialistRepository
 
-    def execute(self, ticket_id: str, specialist_id: str) -> Ticket:
+    def execute(
+        self,
+        ticket_id: str,
+        specialist_id: str,
+        organization_id: Optional[str] = None,
+    ) -> Ticket:
         ticket = self.tickets.get_by_id(ticket_id)
         if not ticket:
             raise TicketNotFoundError(f"Заявка {ticket_id} не найдена")
+        if organization_id and ticket.organization_id != organization_id:
+            raise ValidationError("Заявка принадлежит другой УК")
         specialist = self.specialists.get_by_id(specialist_id)
         if not specialist:
             raise SpecialistNotFoundError(f"Специалист {specialist_id} не найден")
@@ -175,10 +189,16 @@ class AssignSpecialist:
 class CompleteTicket:
     tickets: TicketRepository
 
-    def execute(self, ticket_id: str) -> Ticket:
+    def execute(
+        self,
+        ticket_id: str,
+        organization_id: Optional[str] = None,
+    ) -> Ticket:
         ticket = self.tickets.get_by_id(ticket_id)
         if not ticket:
             raise TicketNotFoundError(f"Заявка {ticket_id} не найдена")
+        if organization_id and ticket.organization_id != organization_id:
+            raise ValidationError("Заявка принадлежит другой УК")
         ticket.complete()
         return self.tickets.update(ticket)
 
@@ -187,11 +207,16 @@ class CompleteTicket:
 class CancelTicketByResident:
     tickets: TicketRepository
 
-    def execute(self, ticket_id: str, resident_ref: Optional[str] = None) -> Ticket:
+    def execute(
+        self,
+        ticket_id: str,
+        reason: str,
+        resident_ref: Optional[str] = None,
+    ) -> Ticket:
         ticket = self.tickets.get_by_id(ticket_id)
         if not ticket:
             raise TicketNotFoundError(f"Заявка {ticket_id} не найдена")
         if resident_ref and ticket.resident_ref != resident_ref:
             raise ValidationError("Нельзя отменить чужую заявку")
-        ticket.cancel_by_resident()
+        ticket.cancel_by_resident(reason)
         return self.tickets.update(ticket)

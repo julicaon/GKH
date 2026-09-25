@@ -40,9 +40,14 @@ export function completeTicket(id: string): Promise<Ticket> {
   return apiRequest<Ticket>(`/api/tickets/${id}/complete`, { method: 'POST' });
 }
 
-export function cancelTicket(id: string, maxUserId: string): Promise<Ticket> {
+export function cancelTicket(
+  id: string,
+  maxUserId: string,
+  reason: string,
+): Promise<Ticket> {
   return apiRequest<Ticket>(`/api/tickets/${id}/cancel`, {
     method: 'POST',
+    body: { reason },
     maxUserId,
     auth: false,
   });

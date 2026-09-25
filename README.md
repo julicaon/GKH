@@ -20,7 +20,7 @@
 
 1. Житель выбирает **адрес**, проходит **Guided Reporting**, получает **рекомендацию-snapshot** и номер заявки.
 2. Диспетчер **своей УК** видит ленту с **HIGH сверху**, кратким **summaryText**, берёт заявку, назначает мастера из пула **той же УК**, закрывает.
-3. Житель видит статус и может отменить заявку в `NEW` / `ACCEPTED`.
+3. Житель видит статус и может отменить заявку (с указанием причины).
 4. Всё это **тестируется без токена MAX** (DevShell + mock Bridge/Bot).
 
 ---
@@ -31,7 +31,7 @@
 |---|--------|-----------|
 | 1 | Отдельный репозиторий: FastAPI (DDD) + Postgres + React/`@maxhub/max-ui` + Docker + mock MAX | Подъём `compose` ≤ 5 мин |
 | 2 | Домен: ParentCategory/Category, urgency, photo, CancelByResident, TicketSummary | Инварианты и snapshots на submit |
-| 3 | Resident UX: адрес → блок → категория → вопросы+фото → результат; отмена NEW/ACCEPTED | Guided Reporting в мини-приложении |
+| 3 | Resident UX: адрес → блок → категория → вопросы+фото → результат; отмена с причиной | Guided Reporting в мини-приложении |
 | 4 | Диспетчер: лента HIGH сверху + саммари; accept/assign/complete; CRUD triage | Рабочий контур УК |
 | 5 | Тесты без токена MAX: domain/API, DevShell, mock Bridge/Bot | Must-проверяемость без прода |
 | 6 | Сдача: OpenAPI, seed Вода/Электрика/Подъезд, README | Демо и онбординг |
@@ -73,8 +73,8 @@ flowchart LR
 | B-M3 | Guided questionnaire 2–3 вопроса; правила и тексты рекомендаций **из БД**, не из UI |
 | B-M4 | Опциональное фото (`photoUrl`: URL/stub) в модели Ticket |
 | B-M5 | При submit: match rule → **urgency** → **summaryText** → snapshots (answers, recommendation, address) |
-| B-M6 | State machine: `NEW → ACCEPTED → IN_PROGRESS → DONE`; `NEW\|ACCEPTED → CANCELLED_BY_RESIDENT` |
-| B-M7 | Отмена жителем только из NEW/ACCEPTED; из IN_PROGRESS — ошибка домена |
+| B-M6 | State machine: `NEW → ACCEPTED → IN_PROGRESS → DONE`; отмена жителем из любого статуса (кроме уже отменённой) с обязательной причиной → `CANCELLED_BY_RESIDENT` |
+| B-M7 | При отмене обязательна `cancelReason`; повторная отмена уже отменённой — ошибка домена |
 | B-M8 | Экран результата: recommendation + номер + SLA-hint по urgency |
 | B-M9 | «Мои заявки»: статус, ФИО мастера (если назначен), urgency, отмена |
 | B-M10 | Лента диспетчера: заявки своей УК, **HIGH сверху**, в строке summaryText + адрес + статус + urgency |
@@ -269,12 +269,10 @@ pytest -q
 
 ```
 NEW → ACCEPTED → IN_PROGRESS → DONE
-NEW → CANCELLED_BY_RESIDENT
-ACCEPTED → CANCELLED_BY_RESIDENT
+* → CANCELLED_BY_RESIDENT   (из любого статуса, кроме уже отменённой; нужна причина)
 ```
 
-После `IN_PROGRESS` отмена жителем запрещена.
-
+Отмена жителем доступна для любой незакрытой-как-отменённой заявки; причина сохраняется в `cancelReason`.
 ---
 
 ## Подключение реального MAX (после токена)

@@ -5,6 +5,17 @@ export function listBuildings(): Promise<Building[]> {
   return apiRequest<Building[]>('/api/buildings', { auth: false });
 }
 
+export function resolveBuilding(body: {
+  buildingId?: string;
+  addressQuery?: string;
+}): Promise<Building> {
+  return apiRequest<Building>('/api/buildings/resolve', {
+    method: 'POST',
+    body,
+    auth: false,
+  });
+}
+
 export function getBuildingCategories(buildingId: string): Promise<BuildingCategories> {
   return apiRequest<BuildingCategories>(`/api/buildings/${buildingId}/categories`, {
     auth: false,

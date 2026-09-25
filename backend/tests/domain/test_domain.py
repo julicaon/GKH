@@ -36,18 +36,19 @@ def _ticket(**kwargs) -> Ticket:
 
 def test_cancel_from_new_ok():
     t = _ticket(status=TicketStatus.NEW)
-    t.cancel_by_resident()
+    t.cancel_by_resident("решилось само")
     assert t.status == TicketStatus.CANCELLED_BY_RESIDENT
+    assert t.cancel_reason == "решилось само"
 
 
 def test_cancel_from_accepted_ok():
     t = _ticket(status=TicketStatus.NEW)
     t.accept("disp-1")
-    t.cancel_by_resident()
+    t.cancel_by_resident("ошибка")
     assert t.status == TicketStatus.CANCELLED_BY_RESIDENT
 
 
-def test_cancel_from_in_progress_raises():
+def test_cancel_from_in_progress_ok_with_reason():
     t = _ticket(status=TicketStatus.NEW)
     t.accept("disp-1")
     specialist = Specialist(
@@ -55,8 +56,24 @@ def test_cancel_from_in_progress_raises():
     )
     t.assign_specialist(specialist)
     assert t.status == TicketStatus.IN_PROGRESS
+    t.cancel_by_resident("мастер не нужен")
+    assert t.status == TicketStatus.CANCELLED_BY_RESIDENT
+    assert t.cancel_reason == "мастер не нужен"
+
+
+def test_cancel_requires_reason():
+    from domain.exceptions import ValidationError
+
+    t = _ticket(status=TicketStatus.NEW)
+    with pytest.raises(ValidationError):
+        t.cancel_by_resident("   ")
+
+
+def test_cancel_already_cancelled_raises():
+    t = _ticket(status=TicketStatus.NEW)
+    t.cancel_by_resident("один раз")
     with pytest.raises(InvalidTicketTransitionError):
-        t.cancel_by_resident()
+        t.cancel_by_resident("ещё раз")
 
 
 def test_assign_org_invariant():

@@ -98,10 +98,11 @@ def test_cancel_by_resident(client):
     cancel = client.post(
         f"/api/tickets/{ticket_id}/cancel",
         headers={"X-Max-User-Id": "resident-200"},
+        json={"reason": "Проблема решилась"},
     )
     assert cancel.status_code == 200, cancel.text
     assert cancel.json()["status"] == "CANCELLED_BY_RESIDENT"
-
+    assert cancel.json()["cancelReason"] == "Проблема решилась"
 
 def test_list_org_high_first(client):
     # LOW-ish door without night open
@@ -144,11 +145,46 @@ def test_list_org_high_first(client):
     assert len(items) >= 2
     # HIGH must come before non-HIGH
     urgencies = [i["urgencyLevel"] for i in items]
-    first_high = urgencies.index("HIGH")
-    # all HIGH should be before any MEDIUM/LOW that appear after first item group
     seen_non_high = False
     for u in urgencies:
         if u != "HIGH":
             seen_non_high = True
         elif seen_non_high:
             pytest.fail("HIGH ticket appeared after non-HIGH")
+
+
+def test_resolve_building_by_address(client):
+    r = client.post(
+        "/api/buildings/resolve",
+        json={"addressQuery": "Ленина 10"},
+    )
+    assert r.status_code == 200, r.text
+    assert r.json()["id"] == BLD_SEVER_1
+
+
+def test_dispatcher_cannot_accept_other_org_ticket(client):
+    # Ticket for Sever org
+    submit = client.post(
+        "/api/tickets",
+        headers={"X-Max-User-Id": "r-cross"},
+        json={
+            "buildingId": BLD_SEVER_1,
+            "categoryId": CAT_PROTECHKA,
+            "answers": {
+                Q_LEAK_WHERE: OPT_FLOOR,
+                Q_SHUT_OFF: OPT_CAN_SHUT,
+                Q_THREAT: OPT_THREAT_NO,
+            },
+        },
+    )
+    assert submit.status_code == 200
+    ticket_id = submit.json()["id"]
+
+    # Login as Yug dispatcher
+    token = _login(client, username="dispatcher_yug", password="yug123")
+    accept = client.post(
+        f"/api/tickets/{ticket_id}/accept",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert accept.status_code == 400
+    assert "УК" in accept.json()["detail"]

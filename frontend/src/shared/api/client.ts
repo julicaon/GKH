@@ -2,8 +2,9 @@ const TOKEN_KEY = 'dispatcher_token';
 
 export function getApiBase(): string {
   const env = import.meta.env.VITE_API_URL as string | undefined;
-  if (env !== undefined && env !== '') return env.replace(/\/$/, '');
-  return 'http://localhost:8000';
+  // Empty / unset → same-origin (Vite proxy in dev, nginx in Docker)
+  if (env === undefined || env === '') return '';
+  return env.replace(/\/$/, '');
 }
 
 export function getStoredToken(): string | null {
@@ -36,7 +37,14 @@ export type RequestOptions = {
 
 function buildUrl(path: string, query?: RequestOptions['query']): string {
   const base = getApiBase();
-  const url = new URL(path.startsWith('http') ? path : `${base}${path}`);
+  let url: URL;
+  if (path.startsWith('http')) {
+    url = new URL(path);
+  } else if (base) {
+    url = new URL(`${base}${path}`);
+  } else {
+    url = new URL(path, typeof window !== 'undefined' ? window.location.origin : 'http://localhost');
+  }
   if (query) {
     for (const [k, v] of Object.entries(query)) {
       if (v === undefined || v === null) continue;

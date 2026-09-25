@@ -401,7 +401,7 @@ def seed_database(session: Session) -> None:
             id=SPEC_SEVER_PLUMBER,
             organization_id=ORG_SEVER,
             full_name="Иванов Пётр Сантехник",
-            skill_tags=["вода", "протечка", "стояк"],
+            skill_tags=["вода", "протечка", "стояк", "parent-voda"],
             active=True,
         )
     )
@@ -410,7 +410,7 @@ def seed_database(session: Session) -> None:
             id=SPEC_SEVER_ELEC,
             organization_id=ORG_SEVER,
             full_name="Сидоров Алексей Электрик",
-            skill_tags=["электрика", "щиток"],
+            skill_tags=["электрика", "щиток", "parent-elektro"],
             active=True,
         )
     )
@@ -419,7 +419,7 @@ def seed_database(session: Session) -> None:
             id=SPEC_YUG_PLUMBER,
             organization_id=ORG_YUG,
             full_name="Козлова Мария Сантехник",
-            skill_tags=["вода", "канализация"],
+            skill_tags=["вода", "канализация", "parent-voda"],
             active=True,
         )
     )
@@ -428,7 +428,7 @@ def seed_database(session: Session) -> None:
             id=SPEC_YUG_DOOR,
             organization_id=ORG_YUG,
             full_name="Орлов Дмитрий Мастер дверей",
-            skill_tags=["домофон", "дверь", "подъезд"],
+            skill_tags=["домофон", "дверь", "подъезд", "parent-podezd"],
             active=True,
         )
     )

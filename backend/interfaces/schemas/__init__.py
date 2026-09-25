@@ -179,7 +179,9 @@ class TicketOut(BaseModel):
     summaryText: str
     status: TicketStatus
     photoUrl: Optional[str] = None
+    cancelReason: Optional[str] = None
     assigneeSpecialistId: Optional[str] = None
+    assigneeSpecialistName: Optional[str] = None
     takenByDispatcherId: Optional[str] = None
     createdAt: datetime
     updatedAt: datetime
@@ -188,6 +190,10 @@ class TicketOut(BaseModel):
 
 class AssignIn(BaseModel):
     specialistId: str
+
+
+class CancelTicketIn(BaseModel):
+    reason: str = Field(..., min_length=1, description="Причина отмены заявки")
 
 
 class SpecialistIn(BaseModel):
@@ -285,7 +291,7 @@ def specialist_out(s) -> SpecialistOut:
     )
 
 
-def ticket_out(t) -> TicketOut:
+def ticket_out(t, assignee_name: Optional[str] = None) -> TicketOut:
     return TicketOut(
         id=t.id,
         residentRef=t.resident_ref,
@@ -309,7 +315,9 @@ def ticket_out(t) -> TicketOut:
         summaryText=t.summary_text,
         status=t.status,
         photoUrl=t.photo_url,
+        cancelReason=t.cancel_reason,
         assigneeSpecialistId=t.assignee_specialist_id,
+        assigneeSpecialistName=assignee_name,
         takenByDispatcherId=t.taken_by_dispatcher_id,
         createdAt=t.created_at,
         updatedAt=t.updated_at,

@@ -4,6 +4,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { logout } from '../../shared/api/auth';
 import { listTickets } from '../../shared/api/tickets';
 import type { Ticket } from '../../shared/api/types';
+import { StatusBadge, UrgencyBadge } from '../../shared/StatusBadge';
+import { statusLabel } from '../../shared/labels';
 
 export function TicketFeed() {
   const navigate = useNavigate();
@@ -63,17 +65,14 @@ export function TicketFeed() {
           <CellSimple
             key={t.id}
             title={t.summaryText}
-            subtitle={`${t.status} · ${t.addressSnapshot}`}
+            subtitle={`${statusLabel(t.status)} · ${t.addressSnapshot}`}
             showChevron
             onClick={() => navigate(`/dispatcher/tickets/${t.id}`)}
             after={
-              t.urgencyLevel === 'HIGH' ? (
-                <span className="urgency-high" style={{ color: 'var(--urgency-high)' }}>
-                  HIGH
-                </span>
-              ) : (
-                <span className="muted">{t.urgencyLevel}</span>
-              )
+              <span className="status-row">
+                {t.urgencyLevel === 'HIGH' && <UrgencyBadge level={t.urgencyLevel} />}
+                <StatusBadge status={t.status} />
+              </span>
             }
           />
         ))}

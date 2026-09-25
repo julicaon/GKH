@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Button,
   CellList,
@@ -15,6 +15,24 @@ import {
 } from '../../shared/api/tickets';
 import { listSpecialists } from '../../shared/api/specialists';
 import type { Specialist, Ticket } from '../../shared/api/types';
+import { StatusBadge, UrgencyBadge } from '../../shared/StatusBadge';
+import { statusLabel } from '../../shared/labels';
+
+function matchesParentSkills(spec: Specialist, parentCategoryId: string): boolean {
+  if (!spec.skillTags.length) return true;
+  const tags = spec.skillTags.map((t) => t.toLowerCase());
+  const parent = parentCategoryId.toLowerCase();
+  if (tags.some((t) => parent.includes(t) || t.includes(parent))) return true;
+  if (parent.includes('voda') && tags.some((t) => t.includes('вод') || t.includes('протеч'))) return true;
+  if (parent.includes('elektro') && tags.some((t) => t.includes('электр') || t.includes('щит'))) return true;
+  if (
+    parent.includes('podezd') &&
+    tags.some((t) => t.includes('двер') || t.includes('домоф') || t.includes('подъезд'))
+  ) {
+    return true;
+  }
+  return false;
+}
 
 export function TicketCard() {
   const { id } = useParams();
@@ -48,6 +66,24 @@ export function TicketCard() {
     void reload();
   }, [reload]);
 
+  const filteredSpecialists = useMemo(() => {
+    if (!ticket) return specialists;
+    const matched = specialists.filter((s) =>
+      matchesParentSkills(s, ticket.parentCategoryId),
+    );
+    return matched.length ? matched : specialists;
+  }, [specialists, ticket]);
+
+  useEffect(() => {
+    if (!ticket || ticket.assigneeSpecialistId) return;
+    if (
+      filteredSpecialists.length &&
+      !filteredSpecialists.some((s) => s.id === selectedSpecialist)
+    ) {
+      setSelectedSpecialist(filteredSpecialists[0].id);
+    }
+  }, [filteredSpecialists, selectedSpecialist, ticket]);
+
   const run = async (fn: () => Promise<Ticket>) => {
     setBusy(true);
     setError(null);
@@ -76,20 +112,33 @@ export function TicketCard() {
       <Typography.Headline>Карточка заявки</Typography.Headline>
       {error && <Typography.Body>{error}</Typography.Body>}
 
+      <div className="status-row">
+        <StatusBadge status={ticket.status} />
+        <UrgencyBadge level={ticket.urgencyLevel} />
+      </div>
+      <Typography.Body>
+        Текущий статус: <strong>{statusLabel(ticket.status)}</strong>
+      </Typography.Body>
+
       <CellList mode="island">
         <CellSimple title="Адрес" subtitle={ticket.addressSnapshot} />
         <CellSimple title="Суть" subtitle={ticket.summaryText} />
-        <CellSimple title="Статус" subtitle={ticket.status} />
+        <CellSimple
+          title="Статус"
+          subtitle={statusLabel(ticket.status)}
+          after={<StatusBadge status={ticket.status} />}
+        />
         <CellSimple
           title="Приоритет"
-          subtitle={ticket.urgencyLevel}
-          after={
-            ticket.urgencyLevel === 'HIGH' ? (
-              <span className="urgency-high">HIGH</span>
-            ) : undefined
-          }
+          after={<UrgencyBadge level={ticket.urgencyLevel} />}
         />
         <CellSimple title="Рекомендация" subtitle={ticket.recommendationTextSnapshot} />
+        {ticket.assigneeSpecialistName && (
+          <CellSimple title="Мастер" subtitle={ticket.assigneeSpecialistName} />
+        )}
+        {ticket.cancelReason && (
+          <CellSimple title="Причина отмены" subtitle={ticket.cancelReason} />
+        )}
         <CellSimple title="Создана" subtitle={new Date(ticket.createdAt).toLocaleString('ru-RU')} />
       </CellList>
 
@@ -121,8 +170,11 @@ export function TicketCard() {
       {(ticket.status === 'ACCEPTED' || ticket.status === 'IN_PROGRESS') && (
         <>
           <Typography.Title>Назначить специалиста</Typography.Title>
+          <Typography.Body>
+            Сначала показаны мастера с подходящими навыками
+          </Typography.Body>
           <CellList mode="island">
-            {specialists.map((s) => (
+            {filteredSpecialists.map((s) => (
               <CellSimple
                 key={s.id}
                 title={s.fullName}
@@ -156,6 +208,13 @@ export function TicketCard() {
         >
           Завершить
         </Button>
+      )}
+
+      {ticket.status === 'DONE' && (
+        <Typography.Body>Заявка закрыта — работа выполнена.</Typography.Body>
+      )}
+      {ticket.status === 'CANCELLED_BY_RESIDENT' && (
+        <Typography.Body>Заявка отменена жителем.</Typography.Body>
       )}
     </div>
   );
